@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Leitura</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+
+        .background-blur {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 0;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+
+        body {
+            background-image: url("img/1355276.jpeg");
+            color: white;
+
+        }
+
+        .container {
+            max-width: 1000px;
+        }
+
+        .box {
+            background-color: rgba(34, 34, 34, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgb(132, 0, 255);
+            min-height: 150px;
+            max-height: 300px; /* Define um limite para ativar o scroll */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Impede que o título role junto */
+        }
+
+        /* Mantém o título fixo no topo */
+        .box h5 {
+            margin: 0;
+            font-size: 1.2rem;
+            position: sticky;
+            top: 0;
+
+            padding: 10px 0;
+            z-index: 10;
+        }
+
+        /* Aplica o scroll no conteúdo */
+        .box-content {
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-top: 5px;
+        }
+
+        /* Estilização do botão */
+        .add-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #d057ff;
+            color: black;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 30px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0px 0px 10px rgba(123, 0, 255, 0.8);
+            cursor: pointer;
+        }
+
+        .menu-flutuante {
+            position: fixed;
+            bottom: 90px; /* Acima do botão */
+            right: 30px;
+            background-color: #222;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(140, 0, 255, 0.8);
+            display: none; /* Começa oculto */
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .menu-flutuante button {
+            background-color: #6939ff;
+            color: black;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100px;
+            font-size: 16px;
+        }
+
+        .menu-flutuante button:hover {
+            background-color: #a51fff;
+        }
+
+
+    </style>
+</head>
+<body>
+<div class="background-blur">
+
+    <div class="container mt-5">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="box">
+                    <h5>Livros lidos recentemente</h5>
+                    <div class="box-content" id="livros-lidos"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="box">
+                    <h5>Tempo gasto</h5>
+                    <div class="box-content" id="tempo-gasto"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="box">
+                    <h5>Sugestões</h5>
+                    <div class="box-content" id="sugestoes"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="box">
+                    <h5>Livros para ler</h5>
+                    <div class="box-content" id="livros-para-ler"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="add-btn" onclick="toggleMenu()">+</button>
+
+    <!-- Menu flutuante -->
+    <div class="menu-flutuante" id="menuFlutuante">
+        <button onclick="window.location.href='lido.html'">Lido</button>
+        <button onclick="window.location.href='ler.html'">Ler</button>
+    </div>
+</div>
+
+<script>
+    const apiUrl = 'http://localhost:3000';
+
+    async function carregarDados() {
+        try {
+            let response = await fetch(`${apiUrl}/livros`);
+            let livros = await response.json();
+            document.getElementById('livros-para-ler').innerHTML = livros
+                .map(livro => `
+        <div style="
+            background: #f4f4f4;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        ">
+            <strong style="color: #6a0dad;">${livro.titulo}</strong> -
+            <span style="color: #333;">${livro.autor}</span>
+        </div>
+    `)
+                .join('');
+
+// Buscar sugestões
+            response = await fetch(`${apiUrl}/sugestoes`);
+            let sugestoes = await response.json();
+            document.getElementById('sugestoes').innerHTML = sugestoes
+                .map(sugestao => `
+        <div style="
+            background: #f4f4f4;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        ">
+            <strong style="color: #6a0dad;">${sugestao.titulo}</strong> -
+            <span style="color: #333;">${sugestao.autor}</span>
+        </div>
+    `)
+                .join('');
+
+// Buscar tempo de leitura
+            response = await fetch(`${apiUrl}/tempo_leitura`);
+            let tempoLeitura = await response.json();
+            document.getElementById('tempo-leitura').innerHTML = `
+    <div style="
+        background: #e0f7fa;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 8px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        font-size: 16px;
+    ">
+        📖 Tempo estimado de leitura: <strong style="color: #00796b;">${tempoLeitura.tempo} minutos</strong>
+    </div>
+`;
+
+            document.getElementById('tempo-gasto').innerHTML = tempoLeitura.map(t => `<p>ID Livro: ${t.livro_id} - ${t.minutos} min</p>`).join('');
+        } catch (error) {
+            console.error('Erro ao carregar dados:', error);
+        }
+    }
+
+    function toggleMenu() {
+        const menu = document.getElementById('menuFlutuante');
+        menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    // Fecha o menu ao clicar fora dele
+    document.addEventListener('click', (event) => {
+        const menu = document.getElementById('menuFlutuante');
+        const botao = document.querySelector('.add-btn');
+
+        if (!menu.contains(event.target) && !botao.contains(event.target)) {
+            menu.style.display = 'none';
+        }
+    });
+
+
+    document.addEventListener('DOMContentLoaded', carregarDados);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
